@@ -32,22 +32,25 @@ def find_tfl_lights(c_image: np.ndarray, **kwargs):
 
 ### GIVEN CODE TO TEST YOUR IMPLENTATION AND PLOT THE PICTURES
 def show_image_and_gt(image, objs, fig_num=None):
-
     data = np.array(image)
     grayImage = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
 
     url = "kernel trainer/8x8/berlin_000521_000019_leftImg8bit.png"
     kernel = get_ker(url)
-    print("k:",kernel.shape)
-    print("i:",grayImage.shape)
-    image2 = ndimage.convolve(grayImage, weights=kernel)
+    print("k:", kernel.shape)
+    print("i:", grayImage.shape)
+    # kernel = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
+    # print(kernel)
+    image2 = sg.convolve2d(grayImage, kernel) #grayImage[50:100, 50:100]).clip(0, 1)
 
-    f, axarr = plt.subplots(2, 1, sharex=True, sharey=True)
+    f, axarr = plt.subplots(3, 1, sharex=True, sharey=True)
     axarr[0].title.set_text('Before Kernel')
     axarr[1].title.set_text('After Kernel')
     axarr[0].imshow(image)
     axarr[1].imshow(image2)
-
+    axarr[2].title.set_text('Kernel')
+    axarr[2].imshow(kernel)
+    plt.show()
     labels = set()
     if objs is not None:
         for o in objs:
@@ -66,15 +69,15 @@ def get_ker(url):
 
     sum = np.sum(grayImage)
 
-    grayImage = grayImage - (sum / grayImage.size)
+    #grayImage = grayImage - (sum / grayImage.size)
 
 
-    f, axarr = plt.subplots(2, 1, sharex=True, sharey=True)
-    axarr[0].title.set_text('Before Kernel')
-    axarr[1].title.set_text('After Kernel')
-    axarr[0].imshow(image)
-    axarr[1].imshow(grayImage)
-    plt.show()
+    # f, axarr = plt.subplots(2, 1, sharex=True, sharey=True)
+    # axarr[0].title.set_text('Before Kernel')
+    # axarr[1].title.set_text('After Kernel')
+    # axarr[0].imshow(image)
+    # axarr[1].imshow(grayImage)
+    # plt.show()
 
     # (thresh, blackAndWhiteImage) = cv2.threshold(grayImage, 127, 255, cv2.THRESH_BINARY)
     # plt.imshow(blackAndWhiteImage)
