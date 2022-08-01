@@ -7,8 +7,8 @@ try:
 
     import numpy as np
     from scipy import signal as sg, ndimage
-    from scipy.ndimage import maximum_filter
-    from scipy.ndimage import convolve
+    from scipy.ndimage import maximum_filter, convolve
+    import scipy.misc
 
     from PIL import Image
 
@@ -35,21 +35,20 @@ def show_image_and_gt(image, objs, fig_num=None):
     data = np.array(image)
     grayImage = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
 
-    url = "kernel trainer/8x8/berlin_000521_000019_leftImg8bit.png"
-    kernel = get_ker(url)
-    print("k:", kernel.shape)
-    print("i:", grayImage.shape)
-    # kernel = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
-    # print(kernel)
-    image2 = sg.convolve2d(grayImage, kernel) #grayImage[50:100, 50:100]).clip(0, 1)
+    url = "kernel trainer/8x8/lightpng.png"
 
+    print("i:", grayImage.shape)
+    kernel = get_ker(url)
+    print("kernel: ", kernel)
+
+    image2 = convolve(grayImage.astype(float), kernel[::-1, ::-1])
     f, axarr = plt.subplots(3, 1, sharex=True, sharey=True)
     axarr[0].title.set_text('Before Kernel')
     axarr[1].title.set_text('After Kernel')
-    axarr[0].imshow(image)
-    axarr[1].imshow(image2)
-    axarr[2].title.set_text('Kernel')
-    axarr[2].imshow(kernel)
+    axarr[0].imshow(kernel, cmap="gray")
+    axarr[1].imshow(image2, cmap="gray")
+    axarr[2].imshow(grayImage, cmap="gray")
+
     plt.show()
     labels = set()
     if objs is not None:
@@ -63,26 +62,10 @@ def show_image_and_gt(image, objs, fig_num=None):
 
 def get_ker(url):
     image = Image.open(url)
-    # convert image to numpy array
     data = np.array(image)
     grayImage = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
-
     sum = np.sum(grayImage)
-
-    #grayImage = grayImage - (sum / grayImage.size)
-
-
-    # f, axarr = plt.subplots(2, 1, sharex=True, sharey=True)
-    # axarr[0].title.set_text('Before Kernel')
-    # axarr[1].title.set_text('After Kernel')
-    # axarr[0].imshow(image)
-    # axarr[1].imshow(grayImage)
-    # plt.show()
-
-    # (thresh, blackAndWhiteImage) = cv2.threshold(grayImage, 127, 255, cv2.THRESH_BINARY)
-    # plt.imshow(blackAndWhiteImage)
-    # plt.show()
-
+    grayImage = grayImage - (sum / grayImage.size)
     return grayImage
 
 
