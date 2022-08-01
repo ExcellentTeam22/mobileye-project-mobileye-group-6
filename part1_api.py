@@ -35,29 +35,61 @@ def show_image_and_gt(image, objs, fig_num=None):
     data = np.array(image)
     grayImage = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
 
-    url = "kernel trainer/8x8/lightpng.png"
+    url = "kernel trainer/8x8/l2.png"
 
-    print("i:", grayImage.shape)
+    # print("i:", grayImage.shape)
     kernel = get_ker(url)
-    print("kernel: ", kernel)
+    # print("kernel: ", kernel)
 
     image2 = convolve(grayImage.astype(float), kernel[::-1, ::-1])
+
+    result = ndimage.maximum_filter(image2,size=50)
+    print(result)
+
+
     f, axarr = plt.subplots(3, 1, sharex=True, sharey=True)
     axarr[0].title.set_text('Before Kernel')
     axarr[1].title.set_text('After Kernel')
-    axarr[0].imshow(kernel, cmap="gray")
+    axarr[2].title.set_text('Maximum filter')
+    axarr[0].imshow(image)
     axarr[1].imshow(image2, cmap="gray")
-    axarr[2].imshow(grayImage, cmap="gray")
+    axarr[2].imshow(result, cmap="gray")
+
+    ## do not add. there is problem whit size of pixels..
+    ## tomorrow is a new day... :/
+
+    # sum = np.sum(result)
+    # avg = sum / result.size
+    # result = result - avg
+    # max = np.max(result)
+    # d = max - avg * 0.000001
+    # print("-" * 20)
+    # print(sum,avg,max,d)
+    #
+    # # temp = np.where(result > avg)
+    # # print(avg, temp)
+    # c = 0
+
+    ## for debug..
+    # for index, i in enumerate(result):
+    #     for index2, j in enumerate(i):
+    #         result[i][j] -= avg
+    #         if result[i][j] >= d :
+    #             print(index, index2)
+    #             c += 1
+    # print(c)
 
     plt.show()
-    labels = set()
-    if objs is not None:
-        for o in objs:
-            poly = np.array(o['polygon'])[list(np.arange(len(o['polygon']))) + [0]]
-            plt.plot(poly[:, 0], poly[:, 1], 'r', label=o['label'])
-            labels.add(o['label'])
-        if len(labels) > 1:
-            plt.legend()
+
+
+    # labels = set()
+    # if objs is not None:
+    #     for o in objs:
+    #         poly = np.array(o['polygon'])[list(np.arange(len(o['polygon']))) + [0]]
+    #         plt.plot(poly[:, 0], poly[:, 1], 'r', label=o['label'])
+    #         labels.add(o['label'])
+    #     if len(labels) > 1:
+    #         plt.legend()
 
 
 def get_ker(url):
