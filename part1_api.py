@@ -1,23 +1,26 @@
-
 try:
     import os
     import json
     import glob
     import argparse
     import cv2
-
     import numpy as np
+    import scipy.misc
+    import matplotlib.pyplot as plt
+
     from scipy import signal as sg, ndimage
     from scipy.ndimage import maximum_filter, convolve
-    import scipy.misc
-    from skimage.feature import peak_local_max
     from PIL import Image
+    from skimage.feature import peak_local_max
 
-    import matplotlib.pyplot as plt
 except ImportError:
     print("Need to fix the installation")
     raise
 
+# ------------------ CONSTANTS ------------------ #
+RED_COLOR = 0
+GREEN_COLOR = 1
+GRAY_COLOR = 3
 
 def find_tfl_lights(c_image: np.ndarray, **kwargs):
     """
@@ -31,6 +34,35 @@ def find_tfl_lights(c_image: np.ndarray, **kwargs):
     return [500, 800, 520], [500, 500, 500], [700, 710], [500, 500]
 
 
+def filter_color(num: int, image: list, list_of_options: list):
+    filter_color_list = []
+    for index in list_of_options:
+        if (num == 0 and image[index[0]][index[1]][0] > 127) and (image[index[0]][index[1]][1] < image[index[0]][index[1]][0]) and (image[index[0]][index[1]][2] < image[index[0]][index[1]][0]):
+            filter_color_list.append([index[0], index[1]])
+        if (num == 1 and image[index[0]][index[1]][1] > 166) and (image[index[0]][index[1]][0] < image[index[0]][index[1]][1]) and (image[index[0]][index[1]][2] < image[index[0]][index[1]][1]):
+            filter_color_list.append([index[0], index[1]])
+    return filter_color_list
+
+
+def show_3d_filter(image1, image2, filter_array_r, filter_array_g):
+    f, axarr = plt.subplots(3, 1, sharex=True, sharey=True)
+    axarr[0].title.set_text('Before Kernel')
+    axarr[1].title.set_text('After Kernel')
+    axarr[2].title.set_text('Maximum filter')
+    axarr[0].imshow(image1)
+    axarr[1].imshow(image2, cmap="gray")
+    axarr[2].imshow(image1, cmap="gray")
+
+    if filter_array_r:
+        t_red = np.array(filter_array_r)
+        x, y = t_red.T
+        axarr[2].plot(y, x, 'r.')
+    if filter_array_g:
+        t_green = np.array(filter_array_g)
+        x, y = t_green.T
+        axarr[2].plot(y, x, 'g.')
+
+
 ### GIVEN CODE TO TEST YOUR IMPLENTATION AND PLOT THE PICTURES
 def show_image_and_gt(image, objs, fig_num=None):
 
@@ -38,53 +70,32 @@ def show_image_and_gt(image, objs, fig_num=None):
 
     #convert to color:
     # image_after_convert = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
-    image_after_convert = extract_color(1,data)
 
-    url = "kernel trainer/8x8/l4.png"
-    kernel = get_ker(url)
-
-    image2 = (convolve(image_after_convert.astype(float), kernel[::-1, ::-1]))
+    # RED
+    image_after_convert_r = extract_color(RED_COLOR, data)
+    url = "kernel trainer/8x8/l2.png"
+    kernel = get_ker(url,RED_COLOR)
+    image2 = (convolve(image_after_convert_r.astype(float), kernel[::-1, ::-1]))
     image2 = normalize_arr(image2)
-    # print("-" * 20 , " \n image2 : \n","-" * 20)
-    t= []
-    list_of_options = peak_local_max(image2, min_distance=100)
-    for index in list_of_options:
-        if data[index[0]][index[1]][0] > 150 or data[index[0]][index[1]][1] > 150 :
-            print(index)
-            t.append([index[0],index[1]])
+    list_of_options = peak_local_max(image2, min_distance=80)
+    list_of_options = list(filter(lambda x: (image2[x[0]][x[1]] > 126), list_of_options))
+    filter_red = filter_color(RED_COLOR, image, list_of_options)
 
-    print("-" * 20, " \n t : \n", "-" * 20)
-    print(len(t),t)
+    # GREEN
+    image_after_convert_g = extract_color(GREEN_COLOR, data)
+    url = "kernel trainer/8x8/l4.png"
+    kernel = get_ker(url,GREEN_COLOR)
+    image2 = (convolve(image_after_convert_g.astype(float), kernel[::-1, ::-1]))
+    image2 = normalize_arr(image2)
+    list_of_options = peak_local_max(image2, min_distance=80)
+    list_of_options = list(filter(lambda x: (image2[x[0]][x[1]] > 126), list_of_options))
+    filter_green = filter_color(GREEN_COLOR, image, list_of_options)
+
 
     # temp_to_zip = np.where(np.logical_and(list_of_options > (np.max(list_of_options) - (np.average(list_of_options) * 0.05)),
     #                                       list_of_options <= 255))
     # list_of_options = list(zip(temp_to_zip[0],temp_to_zip[1]))
-
-
-    print("-" * 20, " \n peak_local_max:\n ", "-" * 20)
-    print(list_of_options, len(list_of_options))
-
-
-    f, axarr = plt.subplots(3, 1, sharex=True, sharey=True)
-    axarr[0].title.set_text('Before Kernel')
-    axarr[1].title.set_text('After Kernel')
-    axarr[2].title.set_text('Maximum filter')
-    axarr[0].imshow(image)
-    axarr[1].imshow(image2, cmap="gray")
-    axarr[2].imshow(image, cmap="gray")
-    t = np.array(t)
-    x,y = t.T
-    # axarr[2].plot(list_of_options[:, 1], list_of_options[:, 0], 'r.')
-    axarr[2].plot(y, x, 'r.')
-
-    # # to get all the optional pixels
-    # temp_to_zip = np.where(np.logical_and(result > (np.max(result) - (np.average(result) * 0.05)), result <= 255))
-    # list_of_options = list(zip(temp_to_zip[0],temp_to_zip[1]))
-    # print("-"*20," \n list of point:\n ", "-"*20)
-    # print(len(list_of_options),list_of_options)
-
-
-
+    show_3d_filter(image, image2, filter_red, filter_green)
     plt.show()
 
 
@@ -98,15 +109,14 @@ def show_image_and_gt(image, objs, fig_num=None):
     #         plt.legend()
 
 
-def get_ker(url):
+def get_ker(url,num):
 
     image = Image.open(url)
     data = np.array(image)
 
     #converv to color:
-    # grayImage = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
-    image_after_convert = extract_color(1,data)
-    # grayImage = grayImage - (np.sum(grayImage) / grayImage.size)
+    # image_after_convert = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
+    image_after_convert = extract_color(num, data)
     image_after_convert = image_after_convert - (np.sum(image_after_convert) / image_after_convert.size)
     return image_after_convert
 
@@ -132,9 +142,9 @@ def test_find_tfl_lights(image_path, json_path=None, fig_num=None):
 
     show_image_and_gt(image, objects, fig_num)
 
-    red_x, red_y, green_x, green_y = find_tfl_lights(image)
-    plt.plot(red_x, red_y, 'ro', color='r', markersize=4)
-    plt.plot(green_x, green_y, 'ro', color='g', markersize=4)
+    # red_x, red_y, green_x, green_y = find_tfl_lights(image)
+    # plt.plot(red_x, red_y, 'ro', color='r', markersize=4)
+    # plt.plot(green_x, green_y, 'ro', color='g', markersize=4)
 
 
 def main(argv=None):
