@@ -37,16 +37,30 @@ def show_image_and_gt(image, objs, fig_num=None):
     data = np.array(image)
 
     #convert to color:
-    grayImage = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
+    # image_after_convert = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
+    image_after_convert = extract_color(1,data)
 
-    url = "kernel trainer/8x8/l2.png"
+    url = "kernel trainer/8x8/l4.png"
     kernel = get_ker(url)
 
-    image2 = (convolve(grayImage.astype(float), kernel[::-1, ::-1]))
+    image2 = (convolve(image_after_convert.astype(float), kernel[::-1, ::-1]))
     image2 = normalize_arr(image2)
-    print("-" * 20 , " \n image2 : \n" ,"-" * 20)
-
+    # print("-" * 20 , " \n image2 : \n","-" * 20)
+    t= []
     list_of_options = peak_local_max(image2, min_distance=100)
+    for index in list_of_options:
+        if data[index[0]][index[1]][0] > 150 or data[index[0]][index[1]][1] > 150 :
+            print(index)
+            t.append([index[0],index[1]])
+
+    print("-" * 20, " \n t : \n", "-" * 20)
+    print(len(t),t)
+
+    # temp_to_zip = np.where(np.logical_and(list_of_options > (np.max(list_of_options) - (np.average(list_of_options) * 0.05)),
+    #                                       list_of_options <= 255))
+    # list_of_options = list(zip(temp_to_zip[0],temp_to_zip[1]))
+
+
     print("-" * 20, " \n peak_local_max:\n ", "-" * 20)
     print(list_of_options, len(list_of_options))
 
@@ -58,7 +72,10 @@ def show_image_and_gt(image, objs, fig_num=None):
     axarr[0].imshow(image)
     axarr[1].imshow(image2, cmap="gray")
     axarr[2].imshow(image, cmap="gray")
-    axarr[2].plot(list_of_options[:, 1], list_of_options[:, 0], 'r.')
+    t = np.array(t)
+    x,y = t.T
+    # axarr[2].plot(list_of_options[:, 1], list_of_options[:, 0], 'r.')
+    axarr[2].plot(y, x, 'r.')
 
     # # to get all the optional pixels
     # temp_to_zip = np.where(np.logical_and(result > (np.max(result) - (np.average(result) * 0.05)), result <= 255))
@@ -87,9 +104,11 @@ def get_ker(url):
     data = np.array(image)
 
     #converv to color:
-    grayImage = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
-    grayImage = grayImage - (np.sum(grayImage) / grayImage.size)
-    return grayImage
+    # grayImage = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
+    image_after_convert = extract_color(1,data)
+    # grayImage = grayImage - (np.sum(grayImage) / grayImage.size)
+    image_after_convert = image_after_convert - (np.sum(image_after_convert) / image_after_convert.size)
+    return image_after_convert
 
 
 def extract_color(num: int, numpy_array: np.array):
