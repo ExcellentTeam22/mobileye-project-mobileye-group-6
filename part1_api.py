@@ -1,3 +1,4 @@
+
 try:
     import os
     import json
@@ -9,7 +10,7 @@ try:
     from scipy import signal as sg, ndimage
     from scipy.ndimage import maximum_filter, convolve
     import scipy.misc
-
+    from skimage.feature import peak_local_max
     from PIL import Image
 
     import matplotlib.pyplot as plt
@@ -32,19 +33,22 @@ def find_tfl_lights(c_image: np.ndarray, **kwargs):
 
 ### GIVEN CODE TO TEST YOUR IMPLENTATION AND PLOT THE PICTURES
 def show_image_and_gt(image, objs, fig_num=None):
+
     data = np.array(image)
+
+    #convert to color:
     grayImage = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
 
     url = "kernel trainer/8x8/l2.png"
-
-    # print("i:", grayImage.shape)
     kernel = get_ker(url)
-    # print("kernel: ", kernel)
 
-    image2 = convolve(grayImage.astype(float), kernel[::-1, ::-1])
+    image2 = (convolve(grayImage.astype(float), kernel[::-1, ::-1]))
+    image2 = normalize_arr(image2)
+    print("-" * 20 , " \n image2 : \n" ,"-" * 20)
 
-    result = ndimage.maximum_filter(image2,size=50)
-    print(result)
+    list_of_options = peak_local_max(image2, min_distance=100)
+    print("-" * 20, " \n peak_local_max:\n ", "-" * 20)
+    print(list_of_options, len(list_of_options))
 
 
     f, axarr = plt.subplots(3, 1, sharex=True, sharey=True)
@@ -53,31 +57,16 @@ def show_image_and_gt(image, objs, fig_num=None):
     axarr[2].title.set_text('Maximum filter')
     axarr[0].imshow(image)
     axarr[1].imshow(image2, cmap="gray")
-    axarr[2].imshow(result, cmap="gray")
+    axarr[2].imshow(image, cmap="gray")
+    axarr[2].plot(list_of_options[:, 1], list_of_options[:, 0], 'r.')
 
-    ## do not add. there is problem whit size of pixels..
-    ## tomorrow is a new day... :/
+    # # to get all the optional pixels
+    # temp_to_zip = np.where(np.logical_and(result > (np.max(result) - (np.average(result) * 0.05)), result <= 255))
+    # list_of_options = list(zip(temp_to_zip[0],temp_to_zip[1]))
+    # print("-"*20," \n list of point:\n ", "-"*20)
+    # print(len(list_of_options),list_of_options)
 
-    # sum = np.sum(result)
-    # avg = sum / result.size
-    # result = result - avg
-    # max = np.max(result)
-    # d = max - avg * 0.000001
-    # print("-" * 20)
-    # print(sum,avg,max,d)
-    #
-    # # temp = np.where(result > avg)
-    # # print(avg, temp)
-    # c = 0
 
-    ## for debug..
-    # for index, i in enumerate(result):
-    #     for index2, j in enumerate(i):
-    #         result[i][j] -= avg
-    #         if result[i][j] >= d :
-    #             print(index, index2)
-    #             c += 1
-    # print(c)
 
     plt.show()
 
@@ -93,13 +82,22 @@ def show_image_and_gt(image, objs, fig_num=None):
 
 
 def get_ker(url):
+
     image = Image.open(url)
     data = np.array(image)
+
+    #converv to color:
     grayImage = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
-    sum = np.sum(grayImage)
-    grayImage = grayImage - (sum / grayImage.size)
+    grayImage = grayImage - (np.sum(grayImage) / grayImage.size)
     return grayImage
 
+
+def extract_color(num: int, numpy_array: np.array):
+    return numpy_array[:, :, num].copy()
+
+
+def normalize_arr(arr):
+    return (255*(arr - np.min(arr))/np.ptp(arr)).astype(int)
 
 def test_find_tfl_lights(image_path, json_path=None, fig_num=None):
     """
