@@ -71,6 +71,7 @@ def show_3d_filter(image1, image2, filter_array_r, filter_array_g):
     axarr[1].imshow(image2, cmap="gray")
     axarr[2].imshow(image1, cmap="gray")
 
+
     if filter_array_r:
         t_red = np.array(filter_array_r)
         x, y = t_red.T
@@ -105,8 +106,8 @@ def show_image_and_gt(image, objs, fig_num=None):
     kernel = get_ker(url, RED_COLOR)
     image2 = (convolve(image_after_convert_r.astype(float), kernel[::-1, ::-1]))
     image2 = normalize_arr(image2)
-    list_of_options = peak_local_max(image2, min_distance=80)
-    list_of_options = list(filter(lambda x: (image2[x[0]][x[1]] > 126), list_of_options))
+    list_of_options = peak_local_max(image2, min_distance=80,threshold_abs= 126)
+    # list_of_options = list(filter(lambda x: (image2[x[0]][x[1]] > 126), list_of_options))
     filter_red = filter_color(RED_COLOR, image, list_of_options)
 
     # GREEN
@@ -115,9 +116,12 @@ def show_image_and_gt(image, objs, fig_num=None):
     kernel = get_ker(url, GREEN_COLOR)
     image2 = (convolve(image_after_convert_g.astype(float), kernel[::-1, ::-1]))
     image2 = normalize_arr(image2)
-    list_of_options = peak_local_max(image2, min_distance=80)
-    list_of_options = list(filter(lambda x: (image2[x[0]][x[1]] > 126), list_of_options))
+    list_of_options = peak_local_max(image2, min_distance=80,threshold_abs= 126)
+    # list_of_options = list(filter(lambda x: (image2[x[0]][x[1]] > 126), list_of_options))
     filter_green = filter_color(GREEN_COLOR, image, list_of_options)
+
+    # print("red:\n",filter_red)
+    # print("green:\n",filter_green)
 
     show_3d_filter(image, image2, filter_red, filter_green)
     plt.show()
