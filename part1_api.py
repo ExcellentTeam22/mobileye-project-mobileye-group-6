@@ -1,3 +1,4 @@
+
 try:
     # ------------------ IMPORT ------------------ #
     import os
@@ -8,11 +9,12 @@ try:
     import numpy as np
     import scipy.misc
     import matplotlib.pyplot as plt
-
+    import pandas as pd
     from scipy import signal as sg, ndimage
     from scipy.ndimage import maximum_filter, convolve
     from PIL import Image
     from skimage.feature import peak_local_max
+
 
 except ImportError:
     print("Need to fix the installation")
@@ -23,6 +25,7 @@ RED_COLOR = 0
 GREEN_COLOR = 1
 GRAY_COLOR = 3
 
+PD_TABLE = pd.DataFrame()
 
 def find_tfl_lights(c_image: np.ndarray, **kwargs):
     """
@@ -83,7 +86,7 @@ def show_3d_filter(image1, image2, filter_array_r, filter_array_g):
 
 
 ### GIVEN CODE TO TEST YOUR IMPLENTATION AND PLOT THE PICTURES
-def show_image_and_gt(image, objs, fig_num=None):
+def show_image_and_gt(image_path ,image, objs, fig_num=None):
     """
     1) Create kernel for red and green colors.
     2) Make convolution between the kernel to the image.
@@ -120,12 +123,16 @@ def show_image_and_gt(image, objs, fig_num=None):
     # list_of_options = list(filter(lambda x: (image2[x[0]][x[1]] > 126), list_of_options))
     filter_green = filter_color(GREEN_COLOR, image, list_of_options)
 
-    # print("red:\n",filter_red)
-    # print("green:\n",filter_green)
+    db1 = pd.DataFrame(
+        {"path": image_path, "x": [x[0] for x in filter_red], "y": [y[1] for y in filter_red], "color": "r",
+         "zoom": 1.00})
+    db2 = pd.DataFrame(
+        {"path": image_path, "x": [x[0] for x in filter_green], "y": [y[1] for y in filter_green], "color": "g",
+         "zoom": 1.00})
 
     show_3d_filter(image, image2, filter_red, filter_green)
     plt.show()
-
+    return pd.concat([db1, db2], ignore_index=True)
     # labels = set()
     # if objs is not None:
     #     for o in objs:
@@ -187,7 +194,7 @@ def test_find_tfl_lights(image_path, json_path=None, fig_num=None):
         what = ['traffic light']
         objects = [o for o in gt_data['objects'] if o['label'] in what]
 
-    show_image_and_gt(image, objects, fig_num)
+    return show_image_and_gt(image_path, image, objects, fig_num)
 
     # red_x, red_y, green_x, green_y = find_tfl_lights(image)
     # plt.plot(red_x, red_y, 'ro', color='r', markersize=4)
@@ -213,12 +220,17 @@ def main(argv=None):
         args.dir = default_base
     flist = glob.glob(os.path.join(args.dir, '*_leftImg8bit.png'))
 
+    pd_table = pd.DataFrame()  # panda table arg!!!!!
+
     for image in flist:
         json_fn = image.replace('_leftImg8bit.png', '_gtFine_polygons.json')
 
         if not os.path.exists(json_fn):
             json_fn = None
-        test_find_tfl_lights(image, json_fn)
+
+        # Add trafic lights of new image
+        pd_table = pd.concat([pd_table, test_find_tfl_lights(image, json_fn)],ignore_index=True)
+        #print("main func", pd_table)
 
     if len(flist):
         print("You should now see some images, with the ground truth marked on them. Close all to quit.")
