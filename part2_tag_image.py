@@ -6,6 +6,8 @@ from termcolor import colored
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
 
+img_name = ''
+new_name = ''
 
 class bcolors:
     HEADER = '\033[95m'
@@ -30,24 +32,32 @@ class bcolors:
 
 
 class Index:
-    ind = 0
 
-    def b_green(self, event, num):
-        print(num)
-        print(f"{bcolors.OKGREEN}Green{bcolors.ENDC}")
-
-    def b_not(self, event):
-
-        print(f"{bcolors.White}Not{bcolors.ENDC}")
+    def b_green(self, event):
+        new_name = img_name.replace(".png","_G.png")
+        print(f"{bcolors.OKGREEN}{new_name}{bcolors.ENDC}")
+        new_name = ''
+        plt.close()
 
 
     def b_red(self, event):
-        print(f"{bcolors.Red}Red{bcolors.ENDC}")
+        new_name = img_name.replace(".png", "_R.png")
+        print(f"{bcolors.Red}{new_name}{bcolors.ENDC}")
+        plt.close()
+
+
+    def b_not(self, event):
+        new_name = img_name.replace(".png", "_N.png")
+        print(f"{bcolors.Blue}{new_name}{bcolors.ENDC}")
+        new_name = ''
+        plt.close()
 
 
     def b_ign(self, event):
-        print(f"{bcolors.Black}Ignore{bcolors.ENDC}")
-
+        new_name = img_name.replace(".png", "_I.png")
+        print(f"{bcolors.Black}{new_name}{bcolors.ENDC}")
+        new_name = ''
+        plt.close()
 
 
 if __name__ == '__main__':
@@ -56,8 +66,8 @@ if __name__ == '__main__':
     for filename in glob.glob('test2/*.png'):  # assuming gif
         print(filename)
         im = Image.open(filename)
-        image_list.append(im)
-
+        # image_list.append(im)
+        img_name = filename
         f, axarr = plt.subplots(1, 1, sharex=True, sharey=True)
         axarr.title.set_text('image')
         axarr.imshow(im)
@@ -73,13 +83,11 @@ if __name__ == '__main__':
 
         b_ign = Button(ax_ign, 'Ignore', color='w')
         b_ign.on_clicked(callback.b_ign)
-        # b_ign.on_clicked(im.close())
+
         b_red = Button(ax_red, 'Red', color='r')
         b_red.on_clicked(callback.b_red)
-        # b_red.on_clicked(im.close())
+
         b_green = Button(ax_green, 'Green', color='g')
-        num=2
-        b_green.on_clicked(callback.b_green(num))
-        # b_green.on_clicked(im.close())
+        b_green.on_clicked(callback.b_green)
 
         plt.show()
