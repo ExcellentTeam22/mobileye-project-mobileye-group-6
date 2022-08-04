@@ -5,7 +5,11 @@ import glob
 from termcolor import colored
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
+import numpy as np
 
+src_img_dir = 'test2'
+des_imag_dir = 'test2_tag_image'
+img = ''
 img_name = ''
 new_name = ''
 
@@ -34,43 +38,47 @@ class bcolors:
 class Index:
 
     def b_green(self, event):
-        new_name = img_name.replace(".png","_G.png")
+        img_name2 = img_name.replace(src_img_dir, des_imag_dir)
+        new_name = img_name2.replace(".png", "_G.png")
+        plt.imsave(new_name, img)
         print(f"{bcolors.OKGREEN}{new_name}{bcolors.ENDC}")
-        new_name = ''
         plt.close()
 
 
     def b_red(self, event):
-        new_name = img_name.replace(".png", "_R.png")
+        img_name2 = img_name.replace(src_img_dir,des_imag_dir)
+        new_name = img_name2.replace(".png", "_R.png")
+        plt.imsave(new_name,img)
         print(f"{bcolors.Red}{new_name}{bcolors.ENDC}")
         plt.close()
 
 
     def b_not(self, event):
-        new_name = img_name.replace(".png", "_N.png")
+        img_name2 = img_name.replace(src_img_dir, des_imag_dir)
+        new_name = img_name2.replace(".png", "_N.png")
+        plt.imsave(new_name, img)
         print(f"{bcolors.Blue}{new_name}{bcolors.ENDC}")
-        new_name = ''
         plt.close()
 
 
     def b_ign(self, event):
-        new_name = img_name.replace(".png", "_I.png")
+        img_name2 = img_name.replace(src_img_dir, des_imag_dir)
+        new_name = img_name2.replace(".png", "_I.png")
+        plt.imsave(new_name, img)
         print(f"{bcolors.Black}{new_name}{bcolors.ENDC}")
-        new_name = ''
         plt.close()
 
 
 if __name__ == '__main__':
 
     image_list = []
-    for filename in glob.glob('test2/*.png'):  # assuming gif
+    for filename in glob.glob(f'{src_img_dir}/*.png'):  # assuming gif
         print(filename)
-        im = Image.open(filename)
-        # image_list.append(im)
+        img = Image.open(filename)
         img_name = filename
         f, axarr = plt.subplots(1, 1, sharex=True, sharey=True)
         axarr.title.set_text('image')
-        axarr.imshow(im)
+        axarr.imshow(img)
 
         callback = Index()
         ax_ign = plt.axes([0.12, 0.05, 0.1, 0.075])
@@ -91,3 +99,5 @@ if __name__ == '__main__':
         b_green.on_clicked(callback.b_green)
 
         plt.show()
+        img_name = ''
+        new_name = ''
