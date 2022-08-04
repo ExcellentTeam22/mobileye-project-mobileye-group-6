@@ -96,9 +96,10 @@ class Index(object):
 
 
     def b_ign(self, event):
-        img_name2 = self.img_name.replace(self.source,self.dest)
-        self.new_name = img_name2.replace(".png", "_I.png")
-        self.save_image(self.new_name)
+        # img_name2 = self.img_name.replace(self.source,self.dest)
+        # self.new_name = img_name2.replace(".png", "_I.png")
+        # self.save_image(self.new_name)
+        plt.close()
         print(f"{bcolors.Black}{self.new_name}{bcolors.ENDC}")
 
 
