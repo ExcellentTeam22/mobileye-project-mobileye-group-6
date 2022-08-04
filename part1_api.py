@@ -1,4 +1,3 @@
-
 try:
     # ------------------ IMPORT ------------------ #
     import os
@@ -8,13 +7,16 @@ try:
     import cv2
     import numpy as np
     import scipy.misc
+    import matplotlib.patches as patches
     import matplotlib.pyplot as plt
+    from typing import List
+    from  os import walk
+
     import pandas as pd
     from scipy import signal as sg, ndimage
     from scipy.ndimage import maximum_filter, convolve
     from PIL import Image
     from skimage.feature import peak_local_max
-
 
 except ImportError:
     print("Need to fix the installation")
@@ -24,8 +26,10 @@ except ImportError:
 RED_COLOR = 0
 GREEN_COLOR = 1
 GRAY_COLOR = 3
+DEFAULT_BASE = "test2"
+SRC_CSV_PATH = "cropped images\\src.csv"
+CROPPED_IMAGES_PATH = "cropped images\\data"
 
-PD_TABLE = pd.DataFrame()
 
 def find_tfl_lights(c_image: np.ndarray, **kwargs):
     """
@@ -40,7 +44,7 @@ def find_tfl_lights(c_image: np.ndarray, **kwargs):
     return [500, 800, 520], [500, 500, 500], [700, 710], [500, 500]
 
 
-def filter_color(num: int, image: list, list_of_options: list) -> []:
+def filter_color(num: int, image: list, list_of_options: list) -> List:
     """
     The function receives a list of coordinates and an image and returns
     only the coordinates that are within the range of the color
@@ -59,34 +63,85 @@ def filter_color(num: int, image: list, list_of_options: list) -> []:
     return filter_color_list
 
 
-def show_3d_filter(image1, image2, filter_array_r, filter_array_g):
+def design_figure(figure, axarr, image, red_kernel, green_kernel):
+    """
+
+    :param axarr:
+    :param image:
+    :param red_kernel:
+    :param green_kernel:
+    :return:
+    """
+    axarr[0][1].title.set_text('Before Kernel')
+    axarr[0][1].imshow(image)
+
+    axarr[0][0].title.set_text('Red Kernel')
+    axarr[0][0].imshow(red_kernel, cmap="gray")
+
+    axarr[0][2].imshow(green_kernel, cmap="gray")
+    axarr[0][2].title.set_text('Green Kernel')
+
+    axarr[1][2].imshow(image, cmap="gray")
+    axarr[1][2].title.set_text('Green Dots')
+    axarr[1][0].imshow(image, cmap="gray")
+    axarr[1][0].title.set_text('Red Dots')
+
+    axarr[2][0].imshow(image)
+    axarr[2][0].title.set_text('Green Crops')
+    axarr[2][2].imshow(image, cmap="gray")
+    axarr[2][2].title.set_text('Image')
+    axarr[2][1].imshow(image)
+    axarr[2][1].title.set_text('Green Crops')
+    figure.delaxes(axarr[1][1])
+
+
+def add_image_info(filter_array, dot_color, rect_color, dots_ax, crops_ax, x_padd=50, y_padd=50, x_size=100, y_size=120):
+    if filter_array:
+        t = np.array(filter_array)
+        x, y = t.T
+        dots_ax.plot(y, x, dot_color)
+        for dot_x, dot_y in zip(x, y):
+            rec = patches.Rectangle((dot_y - y_padd, dot_x - x_padd), x_size, y_size, linewidth=1, edgecolor=rect_color, facecolor='none')
+            crops_ax.add_patch(rec)
+
+
+def add_crops(filter_array, image, image_path):
+    data = {"File name": [], "X": [], "Y": [], "Source": []}
+    if filter_array:
+        t = np.array(filter_array)
+        dots_x, dots_y = t.T
+        index = len(next(walk(CROPPED_IMAGES_PATH), (None, None, []))[2])
+        for x, y in zip(dots_x, dots_y):
+            cropped = image[x - 50:x+70, y - 50: y + 120]
+            image_after_convert = cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR)
+            cv2.imwrite(f"{CROPPED_IMAGES_PATH}\\{index}.png", image_after_convert)
+            data["File name"].append(f"{index}.png")
+            data["X"].append(f"{x}")
+            data["Y"].append(f"{y}")
+            data["Source"].append(image_path)
+            index += 1
+    if data:
+        df = pd.DataFrame(data)
+        df.to_csv(SRC_CSV_PATH, mode="a", index=False, header=False)
+
+
+
+def show_3d_filter(image, red_kernel, green_kernel, filter_array_r, filter_array_g, image_path):
     """
     Display function of the images and filters in one window for debugging and zooming
     [0] -> image
     [1] -> result after Kernel
     [2] -> image whit landmark (red/ green)
     """
-    f, axarr = plt.subplots(3, 1, sharex=True, sharey=True)
-    axarr[0].title.set_text('Before Kernel')
-    axarr[1].title.set_text('After Kernel')
-    axarr[2].title.set_text('Maximum filter')
-    axarr[0].imshow(image1)
-    axarr[1].imshow(image2, cmap="gray")
-    axarr[2].imshow(image1, cmap="gray")
-
-
-    if filter_array_r:
-        t_red = np.array(filter_array_r)
-        x, y = t_red.T
-        axarr[2].plot(y, x, 'r.')
-    if filter_array_g:
-        t_green = np.array(filter_array_g)
-        x, y = t_green.T
-        axarr[2].plot(y, x, 'g.')
-
+    f, axarr = plt.subplots(3, 3, sharex=True, sharey=True)
+    design_figure(f, axarr, image, red_kernel, green_kernel)
+    add_image_info(filter_array_r, "r.", "red", axarr[1][0], axarr[2][0])
+    add_image_info(filter_array_g, "g.", "green", axarr[1][2], axarr[2][2])
+    add_crops(filter_array_r, image, image_path)
+    add_crops(filter_array_g, image, image_path)
 
 ### GIVEN CODE TO TEST YOUR IMPLENTATION AND PLOT THE PICTURES
-def show_image_and_gt(image_path ,image, objs, fig_num=None):
+def show_image_and_gt(image_path, image, objs, fig_num=None):
     """
     1) Create kernel for red and green colors.
     2) Make convolution between the kernel to the image.
@@ -107,19 +162,19 @@ def show_image_and_gt(image_path ,image, objs, fig_num=None):
     image_after_convert_r = extract_color(RED_COLOR, data)
     url = "kernel trainer/8x8/l2.png"
     kernel = get_ker(url, RED_COLOR)
-    image2 = (convolve(image_after_convert_r.astype(float), kernel[::-1, ::-1]))
-    image2 = normalize_arr(image2)
-    list_of_options = peak_local_max(image2, min_distance=80,threshold_abs= 126)
+    red_kernel_img = (convolve(image_after_convert_r.astype(float), kernel[::-1, ::-1]))
+    red_kernel_img = normalize_arr(red_kernel_img)
+    list_of_options = peak_local_max(red_kernel_img, min_distance=80,threshold_abs= 126)
     # list_of_options = list(filter(lambda x: (image2[x[0]][x[1]] > 126), list_of_options))
     filter_red = filter_color(RED_COLOR, image, list_of_options)
 
     # GREEN
     image_after_convert_g = extract_color(GREEN_COLOR, data)
-    url = "kernel trainer/8x8/l4.png"
+    url = "kernel trainer/8x8/l5.png"
     kernel = get_ker(url, GREEN_COLOR)
-    image2 = (convolve(image_after_convert_g.astype(float), kernel[::-1, ::-1]))
-    image2 = normalize_arr(image2)
-    list_of_options = peak_local_max(image2, min_distance=80,threshold_abs= 126)
+    green_kernel_img = (convolve(image_after_convert_g.astype(float), kernel[::-1, ::-1]))
+    green_kernel_img = normalize_arr(green_kernel_img)
+    list_of_options = peak_local_max(green_kernel_img, min_distance=80,threshold_abs= 100)
     # list_of_options = list(filter(lambda x: (image2[x[0]][x[1]] > 126), list_of_options))
     filter_green = filter_color(GREEN_COLOR, image, list_of_options)
 
@@ -130,7 +185,7 @@ def show_image_and_gt(image_path ,image, objs, fig_num=None):
         {"path": image_path, "x": [x[0] for x in filter_green], "y": [y[1] for y in filter_green], "color": "g",
          "zoom": 1.00})
 
-    show_3d_filter(image, image2, filter_red, filter_green)
+    show_3d_filter(image, red_kernel_img, green_kernel_img,filter_red, filter_green, image_path)
     plt.show()
     return pd.concat([db1, db2], ignore_index=True)
     # labels = set()
@@ -157,8 +212,8 @@ def get_ker(url, num):
     # convert to color:
     if num == GREEN_COLOR:
         image_after_convert = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
-
-    image_after_convert = extract_color(num, data)
+    else:
+        image_after_convert = extract_color(num, data)
     image_after_convert = image_after_convert - (np.sum(image_after_convert) / image_after_convert.size)
     return image_after_convert
 
@@ -214,10 +269,9 @@ def main(argv=None):
     parser.add_argument("-j", "--json", type=str, help="Path to json GT for comparison")
     parser.add_argument('-d', '--dir', type=str, help='Directory to scan images in')
     args = parser.parse_args(argv)
-    default_base = "test"
 
     if args.dir is None:
-        args.dir = default_base
+        args.dir = DEFAULT_BASE
     flist = glob.glob(os.path.join(args.dir, '*_leftImg8bit.png'))
 
     pd_table = pd.DataFrame()  # panda table arg!!!!!
