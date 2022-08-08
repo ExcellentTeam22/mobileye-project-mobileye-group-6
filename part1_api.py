@@ -10,7 +10,7 @@ try:
     import matplotlib.patches as patches
     import matplotlib.pyplot as plt
     from typing import List
-    from  os import walk
+    from os import walk
 
     import pandas as pd
     from scipy import signal as sg, ndimage
@@ -18,25 +18,10 @@ try:
     from PIL import Image
     from skimage.feature import peak_local_max
 
+    import macros
 except ImportError:
     print("Need to fix the installation")
     raise
-
-# ------------------ CONSTANTS ------------------ #
-RED_COLOR = 0
-GREEN_COLOR = 1
-GRAY_COLOR = 3
-DEFAULT_BASE = "test2"
-SRC_CSV_PATH = "cropped images\\src.csv"
-CROPPED_IMAGES_PATH = "cropped images\\data"
-RED_KERNEL_PATH = "kernel trainer/8x8/l2.png"
-GREEN_KERNEL_PATH = "kernel trainer/8x8/l5.png"
-CROP_X_PADD = 50
-CROP_Y_PADD = 50
-CROP_X_SIZE = 100
-CROP_Y_SIZE = 120
-
-
 
 def find_tfl_lights(c_image: np.ndarray, **kwargs):
     """
@@ -104,8 +89,7 @@ def design_figure(figure, axarr, image, red_kernel, green_kernel):
 
 
 #def add_image_info(filter_array, dot_color, rect_color, dots_ax, crops_ax, x_padd=50, y_padd=50, x_size=100, y_size=120):
-def add_image_info(filter_array, dot_color, rect_color, dots_ax, crops_ax, x_padd=CROP_X_PADD, y_padd=CROP_Y_PADD,
-                   x_size=CROP_X_SIZE, y_size=CROP_Y_SIZE):
+def add_image_info(filter_array, dot_color, rect_color, dots_ax, crops_ax, x_padd=macros.CROP_X_PADD, y_padd=macros.CROP_Y_PADD):
 
     if filter_array:
         t = np.array(filter_array)
@@ -116,24 +100,25 @@ def add_image_info(filter_array, dot_color, rect_color, dots_ax, crops_ax, x_pad
             crops_ax.add_patch(rec)
 
 
-def add_crops(filter_array, image, image_path):
+def add_crops(filter_array, image, image_path, up, down, sides):
     data = {"File name": [], "X": [], "Y": [], "Source": []}
     if filter_array:
         t = np.array(filter_array)
         dots_x, dots_y = t.T
-        index = len(next(walk(CROPPED_IMAGES_PATH), (None, None, []))[2])
+        index = len(next(walk(macros.CROPPED_IMAGES_PATH), (None, None, []))[2])
         for x, y in zip(dots_x, dots_y):
-            cropped = image[x - CROP_X_PADD:x + CROP_X_PADD, y - CROP_Y_PADD: y + CROP_Y_PADD]
+            cropped = image[max(0, x - up):min(np.size(image, 0), x + down), max(0, y - sides):min(np.size(image, 1),
+                                                                                                   y + sides)]
             image_after_convert = cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR)
-            cv2.imwrite(f"{CROPPED_IMAGES_PATH}\\{index}.png", image_after_convert)
-            data["File name"].append(f"{CROPPED_IMAGES_PATH}\\{index}.png")
+            cv2.imwrite(f"{macros.CROPPED_IMAGES_PATH}\\{index}.png", image_after_convert)
+            data["File name"].append(f"{macros.CROPPED_IMAGES_PATH}\\{index}.png")
             data["X"].append(f"{x}")
             data["Y"].append(f"{y}")
             data["Source"].append(image_path)
             index += 1
     if data:
         df = pd.DataFrame(data)
-        df.to_csv(SRC_CSV_PATH, mode="a", index=False, header=False)
+        df.to_csv(macros.SRC_CSV_PATH, mode="a", index=False, header=False)
 
 
 
@@ -148,8 +133,6 @@ def show_3d_filter(image, red_kernel, green_kernel, filter_array_r, filter_array
     design_figure(f, axarr, image, red_kernel, green_kernel)
     add_image_info(filter_array_r, "r.", "red", axarr[1][0], axarr[2][0])
     add_image_info(filter_array_g, "g.", "green", axarr[1][2], axarr[2][2])
-    add_crops(filter_array_r, image, image_path)
-    add_crops(filter_array_g, image, image_path)
 
 ### GIVEN CODE TO TEST YOUR IMPLENTATION AND PLOT THE PICTURES
 def show_image_and_gt(image_path, image, objs, fig_num=None):
@@ -163,40 +146,75 @@ def show_image_and_gt(image_path, image, objs, fig_num=None):
     :param objs:
     :param fig_num:
     """
+    # data = np.array(image)
+    #
+    # r_kernel = get_ker(RED_KERNEL_PATH, RED_COLOR)
+    # g_kernel = get_ker(GREEN_KERNEL_PATH, GREEN_COLOR)
+    #
+    # # convert to color:
+    # # image_after_convert = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
+    #
+    # # RED
+    # image_after_convert_r = extract_color(RED_COLOR, data)
+    # red_kernel_img = (convolve(image_after_convert_r.astype(float), r_kernel[::-1, ::-1]))
+    # red_kernel_img = normalize_arr(red_kernel_img)
+    # list_of_options = peak_local_max(red_kernel_img, min_distance=80,threshold_abs= 126)
+    # # list_of_options = list(filter(lambda x: (image2[x[0]][x[1]] > 126), list_of_options))
+    # filter_red = filter_color(RED_COLOR, image, list_of_options)
+    #
+    # # GREEN
+    # image_after_convert_g = extract_color(GREEN_COLOR, data)
+    # green_kernel_img = (convolve(image_after_convert_g.astype(float), g_kernel[::-1, ::-1]))
+    # green_kernel_img = normalize_arr(green_kernel_img)
+    # list_of_options = peak_local_max(green_kernel_img, min_distance=80, threshold_abs=100)
+    # filter_green = filter_color(GREEN_COLOR, image, list_of_options)
+    #
+    # show_3d_filter(image, red_kernel_img, green_kernel_img,filter_red, filter_green, image_path)
+    # plt.show()
+    # # labels = set()
+    # # if objs is not None:
+    # #     for o in objs:
+    # #         poly = np.array(o['polygon'])[list(np.arange(len(o['polygon']))) + [0]]
+    # #         plt.plot(poly[:, 0], poly[:, 1], 'r', label=o['label'])
+    # #         labels.add(o['label'])
+    # #     if len(labels) > 1:
+    # #         plt.legend()
+    # ----------
     data = np.array(image)
 
-    r_kernel = get_ker(RED_KERNEL_PATH, RED_COLOR)
-    g_kernel = get_ker(GREEN_KERNEL_PATH, GREEN_COLOR)
+    kernel_37 = get_ker(macros.KERNEL_PATH_37, macros.GRAY_COLOR)
+    kernel_11 = get_ker(macros.KERNEL_PATH_11, macros.GRAY_COLOR)
 
     # convert to color:
-    # image_after_convert = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
+    image_after_convert = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
 
-    # RED
-    image_after_convert_r = extract_color(RED_COLOR, data)
-    red_kernel_img = (convolve(image_after_convert_r.astype(float), r_kernel[::-1, ::-1]))
-    red_kernel_img = normalize_arr(red_kernel_img)
-    list_of_options = peak_local_max(red_kernel_img, min_distance=80,threshold_abs= 126)
-    # list_of_options = list(filter(lambda x: (image2[x[0]][x[1]] > 126), list_of_options))
-    filter_red = filter_color(RED_COLOR, image, list_of_options)
+    # 11
+    kernel_img_11 = (convolve(image_after_convert.astype(float), kernel_11[::-1, ::-1]))
+    kernel_img_11 = normalize_arr(kernel_img_11)
+    list_of_options_11 = peak_local_max(kernel_img_11, min_distance=100, threshold_abs=150)
+    filter_11_r = filter_color(macros.RED_COLOR, image, list_of_options_11)
+    filter_11_g = filter_color(macros.GREEN_COLOR, image, list_of_options_11)
 
-    # GREEN
-    image_after_convert_g = extract_color(GREEN_COLOR, data)
-    green_kernel_img = (convolve(image_after_convert_g.astype(float), g_kernel[::-1, ::-1]))
-    green_kernel_img = normalize_arr(green_kernel_img)
-    list_of_options = peak_local_max(green_kernel_img, min_distance=80, threshold_abs=100)
-    filter_green = filter_color(GREEN_COLOR, image, list_of_options)
+    # 37
+    kernel_img_37 = (convolve(image_after_convert.astype(float), kernel_37[::-1, ::-1]))
+    kernel_img_37 = normalize_arr(kernel_img_37)
+    list_of_options_37 = peak_local_max(kernel_img_37, min_distance=80, threshold_abs=150)
+    filter_37_g = filter_color(macros.GREEN_COLOR, image, list_of_options_37)
+    filter_37_r = filter_color(macros.RED_COLOR, image, list_of_options_37)
 
-    show_3d_filter(image, red_kernel_img, green_kernel_img,filter_red, filter_green, image_path)
-    plt.show()
-    # labels = set()
-    # if objs is not None:
-    #     for o in objs:
-    #         poly = np.array(o['polygon'])[list(np.arange(len(o['polygon']))) + [0]]
-    #         plt.plot(poly[:, 0], poly[:, 1], 'r', label=o['label'])
-    #         labels.add(o['label'])
-    #     if len(labels) > 1:
-    #         plt.legend()
+    filter_green = filter_11_g + filter_37_g
+    filter_red = filter_11_r + filter_37_r
+    add_crops(filter_11_r, image, image_path, sides=4, down=20, up=4)
+    add_crops(filter_11_g, image, image_path, sides=4, down=4, up=20)
+    add_crops(filter_37_r, image, image_path,sides=15 ,down=81, up=15)
+    add_crops(filter_37_g, image, image_path, sides=15, down=15, up=81)
 
+
+    show_3d_filter(image, kernel_img_37, kernel_img_11, filter_red, filter_green, image_path)
+    #plt.show()
+
+
+# ----------
 
 def get_ker(url, num):
     """
@@ -210,7 +228,7 @@ def get_ker(url, num):
     data = np.array(image)
 
     # convert to color:
-    if num == GREEN_COLOR:
+    if num == macros.GRAY_COLOR:
         image_after_convert = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
     else:
         image_after_convert = extract_color(num, data)
@@ -277,12 +295,13 @@ def main(argv=None):
 
     pd_table = pd.DataFrame()  # panda table arg!!!!!
 
-    for image in flist:
-        json_fn = image.replace('_leftImg8bit.png', '_gtFine_polygons.json')
+    for i, image in enumerate(flist):
+        if i % macros.NUM_OF_USERS == macros.USER_ID:
+            json_fn = image.replace('_leftImg8bit.png', '_gtFine_polygons.json')
 
-        if not os.path.exists(json_fn):
-            json_fn = None
-        test_find_tfl_lights(image, json_fn)
+            if not os.path.exists(json_fn):
+                json_fn = None
+            test_find_tfl_lights(image, json_fn)
 
     if len(flist):
         print("You should now see some images, with the ground truth marked on them. Close all to quit.")

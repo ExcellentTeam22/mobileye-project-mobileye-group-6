@@ -6,9 +6,7 @@ from termcolor import colored
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
 import numpy as np
-
-src_img_dir = 'test2'
-des_imag_dir = 'test2_tag_image'
+import macros
 
 
 class bcolors:
@@ -75,7 +73,7 @@ class Index(object):
             self.new_name = ''
 
     def b_green(self, event):
-        img_name2 = self.img_name.replace(src_img_dir, des_imag_dir)
+        img_name2 = self.img_name.replace(macros.DEFAULT_BASE, macros.DES_IMAG_DIR)
         self.new_name = img_name2.replace(".png", "_G.png")
         self.save_image(self.new_name)
         print(f"{bcolors.Green}{self.new_name}{bcolors.ENDC}")
@@ -108,5 +106,5 @@ class Index(object):
         plt.close()
 
 if __name__ == '__main__':
-    i = Index(src_img_dir, des_imag_dir)
+    i = Index(macros.DEFAULT_BASE, macros.DES_IMAG_DIR)
     i.classify()
