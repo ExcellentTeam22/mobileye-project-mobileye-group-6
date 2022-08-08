@@ -29,6 +29,8 @@ GRAY_COLOR = 3
 DEFAULT_BASE = "test2"
 SRC_CSV_PATH = "cropped images\\src.csv"
 CROPPED_IMAGES_PATH = "cropped images\\data"
+RED_KERNEL_PATH = "kernel trainer/8x8/l2.png"
+GREEN_KERNEL_PATH = "kernel trainer/8x8/l5.png"
 
 
 def find_tfl_lights(c_image: np.ndarray, **kwargs):
@@ -38,6 +40,7 @@ def find_tfl_lights(c_image: np.ndarray, **kwargs):
     :param kwargs: Whatever config you want to pass in here
     :return: 4-tuple of x_red, y_red, x_green, y_green
     """
+
     ### WRITE YOUR CODE HERE ###
     ### USE HELPER FUNCTIONS ###
 
@@ -72,7 +75,7 @@ def design_figure(figure, axarr, image, red_kernel, green_kernel):
     :param green_kernel:
     :return:
     """
-    axarr[0][1].title.set_text('Before Kernel')
+    axarr[0][1].title.set_text('Original')
     axarr[0][1].imshow(image)
 
     axarr[0][0].title.set_text('Red Kernel')
@@ -87,11 +90,11 @@ def design_figure(figure, axarr, image, red_kernel, green_kernel):
     axarr[1][0].title.set_text('Red Dots')
 
     axarr[2][0].imshow(image)
-    axarr[2][0].title.set_text('Green Crops')
+    axarr[2][0].title.set_text('Red Crops')
     axarr[2][2].imshow(image, cmap="gray")
     axarr[2][2].title.set_text('Image')
     axarr[2][1].imshow(image)
-    axarr[2][1].title.set_text('Green Crops')
+    axarr[2][2].title.set_text('Green Crops')
     figure.delaxes(axarr[1][1])
 
 
@@ -115,7 +118,7 @@ def add_crops(filter_array, image, image_path):
             cropped = image[x - 50:x+70, y - 50: y + 120]
             image_after_convert = cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR)
             cv2.imwrite(f"{CROPPED_IMAGES_PATH}\\{index}.png", image_after_convert)
-            data["File name"].append(f"{index}.png")
+            data["File name"].append(f"{CROPPED_IMAGES_PATH}\\{index}.png")
             data["X"].append(f"{x}")
             data["Y"].append(f"{y}")
             data["Source"].append(image_path)
@@ -152,17 +155,17 @@ def show_image_and_gt(image_path, image, objs, fig_num=None):
     :param objs:
     :param fig_num:
     """
-
     data = np.array(image)
+
+    r_kernel = get_ker(RED_KERNEL_PATH, RED_COLOR)
+    g_kernel = get_ker(GREEN_KERNEL_PATH, GREEN_COLOR)
 
     # convert to color:
     # image_after_convert = cv2.cvtColor(data, cv2.COLOR_BGR2GRAY)
 
     # RED
     image_after_convert_r = extract_color(RED_COLOR, data)
-    url = "kernel trainer/8x8/l2.png"
-    kernel = get_ker(url, RED_COLOR)
-    red_kernel_img = (convolve(image_after_convert_r.astype(float), kernel[::-1, ::-1]))
+    red_kernel_img = (convolve(image_after_convert_r.astype(float), r_kernel[::-1, ::-1]))
     red_kernel_img = normalize_arr(red_kernel_img)
     list_of_options = peak_local_max(red_kernel_img, min_distance=80,threshold_abs= 126)
     # list_of_options = list(filter(lambda x: (image2[x[0]][x[1]] > 126), list_of_options))
@@ -170,24 +173,13 @@ def show_image_and_gt(image_path, image, objs, fig_num=None):
 
     # GREEN
     image_after_convert_g = extract_color(GREEN_COLOR, data)
-    url = "kernel trainer/8x8/l5.png"
-    kernel = get_ker(url, GREEN_COLOR)
-    green_kernel_img = (convolve(image_after_convert_g.astype(float), kernel[::-1, ::-1]))
+    green_kernel_img = (convolve(image_after_convert_g.astype(float), g_kernel[::-1, ::-1]))
     green_kernel_img = normalize_arr(green_kernel_img)
-    list_of_options = peak_local_max(green_kernel_img, min_distance=80,threshold_abs= 100)
-    # list_of_options = list(filter(lambda x: (image2[x[0]][x[1]] > 126), list_of_options))
+    list_of_options = peak_local_max(green_kernel_img, min_distance=80, threshold_abs=100)
     filter_green = filter_color(GREEN_COLOR, image, list_of_options)
-
-    db1 = pd.DataFrame(
-        {"path": image_path, "x": [x[0] for x in filter_red], "y": [y[1] for y in filter_red], "color": "r",
-         "zoom": 1.00})
-    db2 = pd.DataFrame(
-        {"path": image_path, "x": [x[0] for x in filter_green], "y": [y[1] for y in filter_green], "color": "g",
-         "zoom": 1.00})
 
     show_3d_filter(image, red_kernel_img, green_kernel_img,filter_red, filter_green, image_path)
     plt.show()
-    return pd.concat([db1, db2], ignore_index=True)
     # labels = set()
     # if objs is not None:
     #     for o in objs:
@@ -281,10 +273,7 @@ def main(argv=None):
 
         if not os.path.exists(json_fn):
             json_fn = None
-
-        # Add trafic lights of new image
-        pd_table = pd.concat([pd_table, test_find_tfl_lights(image, json_fn)],ignore_index=True)
-        #print("main func", pd_table)
+        test_find_tfl_lights(image, json_fn)
 
     if len(flist):
         print("You should now see some images, with the ground truth marked on them. Close all to quit.")
