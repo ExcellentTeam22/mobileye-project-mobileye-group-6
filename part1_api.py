@@ -261,9 +261,10 @@ def main(argv=None):
     parser.add_argument("-j", "--json", type=str, help="Path to json GT for comparison")
     parser.add_argument('-d', '--dir', type=str, help='Directory to scan images in')
     args = parser.parse_args(argv)
+    default_base = "test2"
 
     if args.dir is None:
-        args.dir = DEFAULT_BASE
+        args.dir = default_base
     flist = glob.glob(os.path.join(args.dir, '*_leftImg8bit.png'))
 
     pd_table = pd.DataFrame()  # panda table arg!!!!!
