@@ -31,6 +31,11 @@ SRC_CSV_PATH = "cropped images\\src.csv"
 CROPPED_IMAGES_PATH = "cropped images\\data"
 RED_KERNEL_PATH = "kernel trainer/8x8/l2.png"
 GREEN_KERNEL_PATH = "kernel trainer/8x8/l5.png"
+CROP_X_PADD = 50
+CROP_Y_PADD = 50
+CROP_X_SIZE = 100
+CROP_Y_SIZE = 120
+
 
 
 def find_tfl_lights(c_image: np.ndarray, **kwargs):
@@ -98,13 +103,16 @@ def design_figure(figure, axarr, image, red_kernel, green_kernel):
     figure.delaxes(axarr[1][1])
 
 
-def add_image_info(filter_array, dot_color, rect_color, dots_ax, crops_ax, x_padd=50, y_padd=50, x_size=100, y_size=120):
+#def add_image_info(filter_array, dot_color, rect_color, dots_ax, crops_ax, x_padd=50, y_padd=50, x_size=100, y_size=120):
+def add_image_info(filter_array, dot_color, rect_color, dots_ax, crops_ax, x_padd=CROP_X_PADD, y_padd=CROP_Y_PADD,
+                   x_size=CROP_X_SIZE, y_size=CROP_Y_SIZE):
+
     if filter_array:
         t = np.array(filter_array)
         x, y = t.T
         dots_ax.plot(y, x, dot_color)
         for dot_x, dot_y in zip(x, y):
-            rec = patches.Rectangle((dot_y - y_padd, dot_x - x_padd), x_size, y_size, linewidth=1, edgecolor=rect_color, facecolor='none')
+            rec = patches.Rectangle((dot_y - y_padd, dot_x - x_padd), 2 * x_padd, 2 * y_padd, linewidth=1, edgecolor=rect_color, facecolor='none')
             crops_ax.add_patch(rec)
 
 
@@ -115,7 +123,7 @@ def add_crops(filter_array, image, image_path):
         dots_x, dots_y = t.T
         index = len(next(walk(CROPPED_IMAGES_PATH), (None, None, []))[2])
         for x, y in zip(dots_x, dots_y):
-            cropped = image[x - 50:x+70, y - 50: y + 120]
+            cropped = image[x - CROP_X_PADD:x + CROP_X_PADD, y - CROP_Y_PADD: y + CROP_Y_PADD]
             image_after_convert = cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR)
             cv2.imwrite(f"{CROPPED_IMAGES_PATH}\\{index}.png", image_after_convert)
             data["File name"].append(f"{CROPPED_IMAGES_PATH}\\{index}.png")
