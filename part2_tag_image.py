@@ -33,8 +33,10 @@ class bcolors:
     Default = '\033[99m'
 
 
+
 class Index(object):
-    def __init__(self, source_path, file_path, x, y):
+    def __init__(self, source_path, file_path, x, y, pd):
+        self.pd = pd
         self.source_path = source_path
         self.source = Image.open(source_path)
         self.cropped_image_path = file_path
@@ -47,7 +49,6 @@ class Index(object):
 
 
     def classify(self):
-
         print(self.img_name)
         f, axarr = plt.subplots(1, 2)
         axarr[0].title.set_text('image')
@@ -82,23 +83,31 @@ class Index(object):
         self.img_name = ''
         self.new_name = ''
 
+    def inset_crop_to_panda_table(self, color):
+        print(self.x, self.y, self.source_path)
+        new_data_frame = pd.DataFrame({"full_path": self.source_path, "crop_path": self.cropped_image_path, "x": [self.x], "y": [self.x], "color": color, "zoom": 1.00})
+        print(new_data_frame)
+        self.pd[0] = pd.concat([self.pd[0], new_data_frame], ignore_index=True)
 
     def b_green(self, event):
-        self.new_name = self.img_name.replace(macros.DEFAULT_BASE, macros.DES_IMAG_DIR_GREEN)
+        self.inset_crop_to_panda_table("G")
+        self.new_name = self.source_path.replace(macros.DEFAULT_BASE, macros.GREEN_IMAGES_PATH)
         # self.new_name = img_name2.replace(".png", "_G.png")
         self.save_image(self.new_name)
         print(f"{bcolors.Green}{self.new_name}{bcolors.ENDC}")
 
 
     def b_red(self, event):
-        self.new_name = self.img_name.replace(macros.DEFAULT_BASE, macros.DES_IMAG_DIR_RED)
+        self.inset_crop_to_panda_table("R")
+        self.new_name = self.source_path.replace(macros.DEFAULT_BASE, macros.RED_IMAGES_PATH)
         # self.new_name = img_name2.replace(".png", "_R.png")
         self.save_image(self.new_name)
         print(f"{bcolors.Red}{self.new_name}{bcolors.ENDC}")
 
 
     def b_not(self, event):
-        self.new_name = self.img_name.replace(macros.DEFAULT_BASE, macros.DES_IMAG_DIR_NON)
+        self.inset_crop_to_panda_table("N")
+        self.new_name = self.source_path.replace(macros.DEFAULT_BASE, macros.NOT_TRAFFIC_LIGHT)
         # self.new_name = img_name2.replace(".png", "_N.png")
         self.save_image(self.new_name)
         print(f"{bcolors.Blue}{self.new_name}{bcolors.ENDC}")
@@ -113,15 +122,19 @@ class Index(object):
 
 
     def save_image(self,name):
-        plt.imsave(self.new_name, np.array(self.img))
+        plt.imsave(self.new_name, np.array(self.cropped_image))
         plt.close()
 
+
 if __name__ == '__main__':
-    for i, row in pd.read_csv(macros.SRC_CSV_PATH).iterrows():
+    pd_table = [pd.DataFrame()]
+    for i,row in pd.read_csv(macros.SRC_CSV_PATH).iterrows():
         print(row["Source"])
         source_path = row["Source"]
         file_path = row["File name"]
         x = row["X"]
         y = row["Y"]
-        i = Index(source_path, file_path, x, y)
-        i.classify()
+        index = Index(source_path, file_path, x, y, pd_table)
+        index.classify()
+    pd_table[0].to_csv(macros.SRC_CSV_WITH_LABEL_PATH, mode="a", index=False, header=False)
+

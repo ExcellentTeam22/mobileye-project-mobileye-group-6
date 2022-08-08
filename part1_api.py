@@ -109,7 +109,14 @@ def add_crops(filter_array, image, image_path, up, down, sides):
         for x, y in zip(dots_x, dots_y):
             cropped = image[max(0, x - up):min(np.size(image, 0), x + down), max(0, y - sides):min(np.size(image, 1),
                                                                                                    y + sides)]
-            image_after_convert = cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR)
+            image_before_convert = cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR)
+
+            image_after_convert = Image.fromarray(image_before_convert)
+
+            image_after_convert = image_after_convert.resize((30, 40))
+
+            image_after_convert = np.array(image_after_convert)
+
             cv2.imwrite(f"{macros.CROPPED_IMAGES_PATH}\\{index}.png", image_after_convert)
             data["File name"].append(f"{macros.CROPPED_IMAGES_PATH}\\{index}.png")
             data["X"].append(f"{x}")
@@ -298,7 +305,6 @@ def main(argv=None):
     for i, image in enumerate(flist):
         if i % macros.NUM_OF_USERS == macros.USER_ID:
             json_fn = image.replace('_leftImg8bit.png', '_gtFine_polygons.json')
-
             if not os.path.exists(json_fn):
                 json_fn = None
             test_find_tfl_lights(image, json_fn)
