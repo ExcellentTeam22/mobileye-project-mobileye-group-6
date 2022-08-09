@@ -41,7 +41,6 @@ class Index(object):
         self.source = Image.open(source_path)
         self.cropped_image_path = file_path
         self.cropped_image =Image.open(file_path)
-        self.img = ''
         self.img_name = ''
         self.new_name = ''
         self.x = x
@@ -49,7 +48,7 @@ class Index(object):
 
 
     def classify(self):
-        print(self.img_name)
+        print(self.cropped_image_path)
         f, axarr = plt.subplots(1, 2)
         axarr[0].title.set_text('image')
         axarr[1].title.set_text('crop')
@@ -84,22 +83,28 @@ class Index(object):
         self.new_name = ''
 
     def inset_crop_to_panda_table(self, color):
-        print(self.x, self.y, self.source_path)
+        # print(self.x, self.y, self.source_path)
         new_data_frame = pd.DataFrame({"full_path": self.source_path, "crop_path": self.cropped_image_path, "x": [self.x], "y": [self.x], "color": color, "zoom": 1.00})
         print(new_data_frame)
         self.pd[0] = pd.concat([self.pd[0], new_data_frame], ignore_index=True)
 
     def b_green(self, event):
         self.inset_crop_to_panda_table("G")
-        self.new_name = self.source_path.replace(macros.DEFAULT_BASE, macros.GREEN_IMAGES_PATH)
+        self.new_name = self.cropped_image_path
+        self.new_name = self.new_name.replace("cropped images\data", macros.GREEN_LIGHTS_DIR_PATH)
+
         # self.new_name = img_name2.replace(".png", "_G.png")
         self.save_image(self.new_name)
         print(f"{bcolors.Green}{self.new_name}{bcolors.ENDC}")
 
 
+
     def b_red(self, event):
         self.inset_crop_to_panda_table("R")
-        self.new_name = self.source_path.replace(macros.DEFAULT_BASE, macros.RED_IMAGES_PATH)
+        self.new_name = self.cropped_image_path
+        self.new_name = self.new_name.replace("cropped images\data", macros.RED_LIGHTS_DIR_PATH)
+
+
         # self.new_name = img_name2.replace(".png", "_R.png")
         self.save_image(self.new_name)
         print(f"{bcolors.Red}{self.new_name}{bcolors.ENDC}")
@@ -107,7 +112,9 @@ class Index(object):
 
     def b_not(self, event):
         self.inset_crop_to_panda_table("N")
-        self.new_name = self.source_path.replace(macros.DEFAULT_BASE, macros.NOT_TRAFFIC_LIGHT)
+        self.new_name = self.cropped_image_path
+        self.new_name = self.new_name.replace("cropped images\data", macros.NOT_TRAFFIC_LIGHTS_DIR_PATH)
+
         # self.new_name = img_name2.replace(".png", "_N.png")
         self.save_image(self.new_name)
         print(f"{bcolors.Blue}{self.new_name}{bcolors.ENDC}")
@@ -128,7 +135,7 @@ class Index(object):
 
 if __name__ == '__main__':
     pd_table = [pd.DataFrame()]
-    for i,row in pd.read_csv(macros.SRC_CSV_PATH).iterrows():
+    for i,row in pd.read_csv(macros.CROP_INFO_CSV_PATH).iterrows():
         print(row["Source"])
         source_path = row["Source"]
         file_path = row["File name"]
@@ -136,5 +143,5 @@ if __name__ == '__main__':
         y = row["Y"]
         index = Index(source_path, file_path, x, y, pd_table)
         index.classify()
-    pd_table[0].to_csv(macros.SRC_CSV_WITH_LABEL_PATH, mode="a", index=False, header=False)
+    pd_table[0].to_csv(macros.LABELS_INFO_PATH, mode="a", index=False, header=False)
 

@@ -16,6 +16,7 @@ KERNEL_PATH_37 = "kernels/l2.png"
 KERNEL_PATH_11 = "kernels/l7.png"
 
 
-GREEN_LIGHTS_DIR_PATH = "Crop_images\\Green_images"
-RED_LIGHTS_DIR_PATH = "Crop_images\\Red_images"
-NOT_TRAFFIC_LIGHTS_DIR_PATH = "Crop_images\\Not_traffic_light"
+
+GREEN_LIGHTS_DIR_PATH = "cropped images\\Green_images"
+RED_LIGHTS_DIR_PATH = "cropped images\\Red_images"
+NOT_TRAFFIC_LIGHTS_DIR_PATH = "cropped images\\Not_traffic_light"
