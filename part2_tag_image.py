@@ -85,7 +85,7 @@ class Index(object):
     def inset_crop_to_panda_table(self, color):
         # print(self.x, self.y, self.source_path)
         new_data_frame = pd.DataFrame({"full_path": self.source_path, "crop_path": self.cropped_image_path, "x": [self.x], "y": [self.x], "color": color, "zoom": 1.00})
-        print(new_data_frame)
+        # print(new_data_frame)
         self.pd[0] = pd.concat([self.pd[0], new_data_frame], ignore_index=True)
 
     def b_green(self, event):
@@ -125,7 +125,7 @@ class Index(object):
         # self.new_name = img_name2.replace(".png", "_I.png")
         # self.save_image(self.new_name)
         plt.close()
-        print(f"{bcolors.Black}{self.new_name}{bcolors.ENDC}")
+        print(f"{bcolors.Black}{self.cropped_image}{bcolors.ENDC}")
 
 
     def save_image(self,name):
@@ -136,12 +136,17 @@ class Index(object):
 if __name__ == '__main__':
     pd_table = [pd.DataFrame()]
     for i,row in pd.read_csv(macros.CROP_INFO_CSV_PATH).iterrows():
-        print(row["Source"])
+        print("i: ",i,"\n", row["Source"])
         source_path = row["Source"]
         file_path = row["File name"]
         x = row["X"]
         y = row["Y"]
+        if i == 4:
+            break
         index = Index(source_path, file_path, x, y, pd_table)
         index.classify()
+
+    print("end")
+    print("end")
     pd_table[0].to_csv(macros.LABELS_INFO_PATH, mode="a", index=False, header=False)
 
