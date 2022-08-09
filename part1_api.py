@@ -163,13 +163,15 @@ def show_image_and_gt(image_path, image, show=False):
 
     filter_green = filter_11_g + filter_37_g
     filter_red = filter_11_r + filter_37_r
-    add_crops(filter_11_r, image, image_path, sides=4, down=20, up=4)
-    add_crops(filter_11_g, image, image_path, sides=4, down=4, up=20)
-    add_crops(filter_37_r, image, image_path,sides=15 ,down=81, up=15)
-    add_crops(filter_37_g, image, image_path, sides=15, down=15, up=81)
 
     if show:
         show_3d_filter(image, kernel_img_37, kernel_img_11, filter_red, filter_green, image_path)
+    else:
+        add_crops(filter_11_r, image, image_path, sides=4, down=20, up=4)
+        add_crops(filter_11_g, image, image_path, sides=4, down=4, up=20)
+        add_crops(filter_37_r, image, image_path,sides=15 ,down=81, up=15)
+        add_crops(filter_37_g, image, image_path, sides=15, down=15, up=81)
+
 
 
 def get_ker(url, num):
