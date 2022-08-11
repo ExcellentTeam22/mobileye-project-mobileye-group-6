@@ -72,7 +72,9 @@ class TrafficLightDataSet(Dataset):
             assert False, "What to do??"
 
         row = self.crop_data.iloc[idx]
-        image_path = os.path.join(self.crop_dir, row[C.PATH].replace('/', '\\'))
+        new_path = str(row[C.PATH])
+        b = new_path.split('\\')
+        image_path = os.path.join(self.crop_dir, b[-1].replace('/', '\\'))
         image = np.array(Image.open(image_path))  # Torch.read_image ?
         return {self.IMAGE: image, self.LABEL: row[C.IS_TRUE], self.SEQ: row[self.SEQ], self.IMAGE_PATH: image_path}
 
@@ -123,13 +125,26 @@ class MyNeuralNetworkBase(nn.Module):
         self.set_net_and_loss()
 
     def set_net_and_loss(self):
-        # Feel free to inherit this class and override this function.
-        # Here are some totally useless layers. See what YOU need!
-        self.layers = (nn.Conv2d(self.num_in_channels, 5, (1, 1)),
+        self.layers = (nn.Conv2d(self.num_in_channels, 50, (11, 11)),
+                       nn.ReLU(),
+                       nn.Conv2d(50, 20, (9, 9)),
+                       nn.ReLU(),
+                       nn.Conv2d(20, 5, (3, 3)),
+                       nn.ReLU(),
+                       nn.MaxPool2d(4),
+                       nn.ReLU(),
+                       nn.Conv2d(5, 3, (3, 3)),
                        nn.ReLU(),
                        nn.Flatten(1, -1),
-                       nn.Linear(5 * self.w * self.h, 1),
+                       nn.ReLU(),
+                       nn.Linear(504, 30),
+                       nn.ReLU(),
+                       nn.Linear(30, 5),
+                       nn.ReLU(),
+                       nn.Linear(5 , 1),
                        )
+        # Feel free to inherit this class and override this function.
+        # Here are some totally useless layers. See what YOU need!
 
         # This is the recommended loss:
         self.loss_func = nn.BCEWithLogitsLoss

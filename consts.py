@@ -47,7 +47,7 @@ Y0 = 'y0'
 X1 = 'x1'
 Y1 = 'y1'
 ZOOM = 'zoom'
-PATH = 'path'
+PATH = 'crop_path'
 FULL_PATH = 'full_path'
 CROP_PATH = 'crop_path'
 COL = 'col'
@@ -69,7 +69,7 @@ attention_results = 'attention_results'
 # crops_dir = os.path.join(attention_results, 'crop')
 crops_dir = os.path.join('crops')
 attention_results_h5 = 'attention_results.h5'
-crop_results_h5 = 'crop_results2.h5'
+crop_results_h5 = 'new_table.h5'
 models_output_dir = 'logs_and_models'
 logs_dir = 'logs'
 
@@ -82,5 +82,5 @@ DIR_IGNORE = 'Ignore'
 EXTENSION_IMG = '_leftImg8bit.png'
 
 # Crop size:
-default_crop_w = 96
-default_crop_h = 32
+default_crop_w = 54
+default_crop_h = 140

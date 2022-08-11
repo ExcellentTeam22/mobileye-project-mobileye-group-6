@@ -190,7 +190,8 @@ def examine_my_results(base_dir,
         values = [os.path.abspath(os.path.join(prefix, f)) for f in series]
         df2[new_col] = values
         return df2
-    crop_data = update_path(dataset.crop_data, 'path', 'crop_path', dataset.crop_dir)
+
+    crop_data = update_path(dataset.crop_data, 'crop_path', 'crop_path', dataset.crop_dir)
     full_data = update_path(dataset.attn_data, 'path', 'full_path', full_images_dir)
 
     # Ok, from here on, some pandas tricks...
@@ -212,14 +213,17 @@ def examine_my_results(base_dir,
 
 
 def main():
-    base_dir = r'C:\leftImg8bit'
-    full_images_dir = r"C:\leftImg8bit"
-    model_name = 'my_model_final_2'
+    base_dir = r'C:\Users\lfarz\Desktop\bootcamp\leftImg8bit'
+    full_images_dir = r"C:\Users\lfarz\Desktop\bootcamp\mobileye-project-mobileye-group-6\Boocamp data\leftImg8bit_trainvaltest\leftImg8bit"
+    model_name = 'my_model_final_liron'
     train_dataset = TrafficLightDataSet(base_dir, full_images_dir, is_train=True)
     test_dataset = TrafficLightDataSet(base_dir, full_images_dir, is_train=False)
-    trained_model_path = go_train(base_dir, model_name, train_dataset, test_dataset, num_epochs=10)
+    print("start train!!!!")
+    trained_model_path = go_train(base_dir, model_name, train_dataset, test_dataset, num_epochs=100)
+    print("end train!!!!!")
+    print("start test!!!!")
     examine_my_results(base_dir, full_images_dir, trained_model_path, test_dataset)
-
+    print("end test!!!!!")
 
 if __name__ == '__main__':
     main()
